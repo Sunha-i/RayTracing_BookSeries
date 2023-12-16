@@ -11,10 +11,29 @@
 
 #include <iostream>
 
+bool hit_sphere(const point3& center, double radius, const ray& r) {
+    // oc는 origin to center를 의미함.
+    // arbitrary point인 center C와 point P(x,y,z)에 대해, 원의 방정식을 (x-Cx)^2 + (y-Cy)^2 + (z-Cz)^2 = r^2으로 정의할 수 있고,
+    // 이 방정식에서의 좌변을 C에서 P로 향하는 벡터 (P-C)의 내적으로 나타내면 (P-C)·(P-C) = r^2가 됨.
+    // 우리가 알고싶은건 ray가 sphere에 부딪히는지, 그 여부이고 만약 그렇다면 광선의 위치 P(t) 또한 위 방정식을 만족할 것.
+    // 따라서 ((A+tb)-C)·((A+tb)-C) = r^2를 t에 대한 내림차순으로 정리한 이차방정식의 판별식을 통해 ray와 sphere가 교차하는지 판단하는 코드.
+    
+    vec3 oc = r.origin() - center;
+    auto a = dot(r.direction(), r.direction());
+    auto b = 2.0 * dot(oc, r.direction());
+    auto c = dot(oc, oc) - radius * radius;
+    auto discriminant = b*b - 4*a*c;
+    return (discriminant >= 0);
+}
+
 color ray_color(const ray& r) {
     // linearly blend white and blue depending on the height of the y coordinate.
     // to implement a simple gradient, use lerp.
     // blendedValue = (1-a) * startValue + a * endValue
+    // ++) hit_sphere가 true인 경우 red 반환
+    
+    if (hit_sphere(point3(0,0,-1), 0.5, r))
+        return color(1, 0, 0);
     
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5 * (unit_direction.y() + 1.0);
