@@ -17,8 +17,9 @@
 
 class camera {
 public:
-    double aspect_ratio = 1.0;  // Ratio of image width over height
-    int    image_width  = 100;  // Rendered image width in pixel count
+    double aspect_ratio      = 1.0;  // Ratio of image width over height
+    int    image_width       = 100;  // Rendered image width in pixel count
+    int    samples_per_pixel = 10;   // Count of random samples for each pixel
     
     void render(const hittable& world) {
         initialize();
@@ -26,16 +27,17 @@ public:
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
         
         // 각 행은 왼쪽에서 오른쪽으로, 그 행들은 위에서 아래로 입력됨.
-        // 여기서는 P(0,0)을 기준으로 하여 각 pixel들의 center를 구하고, camera_center를 이용해 eye->pixel로의 ray를 정의.
+        // real world의 infinite resolution을 그대로 구현할 수는 없겠지만... 적어도 aliasing 현상을 완화하기 위해,
+        // point sampling 대신 각 픽셀에 대해 여러 sample들의 평균을 내는 방식으로 동일한 효과를 구현할 것.
         for (int j = 0; j < image_height; ++j) {
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             for (int i = 0; i < image_width; ++i) {
-                auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
-                auto ray_direction = pixel_center - center;
-                ray r(center, ray_direction);
-
-                color pixel_color = ray_color(r, world);
-                write_color(std::cout, pixel_color);
+                color pixel_color(0,0,0);
+                for (int sample = 0; sample < samples_per_pixel; ++sample) {
+                    ray r = get_ray(i,j);
+                    pixel_color += ray_color(r, world);
+                }
+                write_color(std::cout, pixel_color, samples_per_pixel);
             }
         }
         
@@ -81,6 +83,28 @@ private:
         // 픽셀의 위치는 사각형인 픽셀의 중심으로 나타내기에 두 delta vector에 0.5를 곱한 값으로 계산됨.
         auto viewport_upper_left = center - vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+    }
+    
+    ray get_ray(int i, int j) const {
+        // Get a randomly sampled camera ray for the pixel at location i,j.
+        // 여기서는 P(0,0)을 기준으로 하여 각 pixel들의 center를 구하고, camera_center를 이용해 eye->sample로의 ray를 정의.
+        
+        auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
+        auto pixel_sample = pixel_center + pixel_sample_square();
+        
+        auto ray_origin = center;
+        auto ray_direction = pixel_sample - ray_origin;
+        
+        return ray(ray_origin, ray_direction);
+    }
+    
+    vec3 pixel_sample_square() const {
+        // Returns a random point in the square surrounding a pixel at the origin.
+        // px = [-0.5,0.5), py = [-0.5,0.5)로 리턴하는 값은 pixel center를 둘러싸는 사각형 내의 offset 범위!
+        
+        auto px = -0.5 + random_double();
+        auto py = -0.5 + random_double();
+        return (px * pixel_delta_u) + (py * pixel_delta_v);
     }
 
     color ray_color(const ray& r, const hittable& world) const {
