@@ -5,35 +5,28 @@
 //  Created by Sun on 2023/12/16.
 //
 
+#include "rtweekend.h"
+
 #include "color.h"
-#include "ray.h"
-#include "vec3.h"
+#include "hittable.h"
+#include "hittable_list.h"
+#include "sphere.h"
 
 #include <iostream>
 
-bool hit_sphere(const point3& center, double radius, const ray& r) {
-    // oc는 origin to center를 의미함.
-    // arbitrary point인 center C와 point P(x,y,z)에 대해, 원의 방정식을 (x-Cx)^2 + (y-Cy)^2 + (z-Cz)^2 = r^2으로 정의할 수 있고,
-    // 이 방정식에서의 좌변을 C에서 P로 향하는 벡터 (P-C)의 내적으로 나타내면 (P-C)·(P-C) = r^2가 됨.
-    // 우리가 알고싶은건 ray가 sphere에 부딪히는지, 그 여부이고 만약 그렇다면 광선의 위치 P(t) 또한 위 방정식을 만족할 것.
-    // 따라서 ((A+tb)-C)·((A+tb)-C) = r^2를 t에 대한 내림차순으로 정리한 이차방정식의 판별식을 통해 ray와 sphere가 교차하는지 판단하는 코드.
-    
-    vec3 oc = r.origin() - center;
-    auto a = dot(r.direction(), r.direction());
-    auto b = 2.0 * dot(oc, r.direction());
-    auto c = dot(oc, oc) - radius * radius;
-    auto discriminant = b*b - 4*a*c;
-    return (discriminant >= 0);
-}
-
-color ray_color(const ray& r) {
+color ray_color(const ray& r, const hittable& world) {
     // linearly blend white and blue depending on the height of the y coordinate.
     // to implement a simple gradient, use lerp.
     // blendedValue = (1-a) * startValue + a * endValue
-    // ++) hit_sphere가 true인 경우 red 반환
     
-    if (hit_sphere(point3(0,0,-1), 0.5, r))
-        return color(1, 0, 0);
+    // 아직 빛과 같은 요소들이 없기 때문에 color map을 이용해서 normal(N)을 시각화할 것.
+    // N을 unit length vector로 생각하면, 각 component는 -1과 1사이. -> 0~1의 간격으로 mapping해야 (r,g,b)로 나타낼 수 있음.
+    // 이를 위해 +1만큼의 offset에 범위의 간격인 2를 1로 줄이는 0.5 * color(N.x()+1, N.y()+1, N.z()+1)을 구현한 것.
+    
+    hit_record rec;
+    if (world.hit(r, interval(0, infinity), rec)) {
+        return 0.5 * (rec.normal + color(1,1,1));
+    }
     
     vec3 unit_direction = unit_vector(r.direction());
     auto a = 0.5 * (unit_direction.y() + 1.0);
@@ -47,9 +40,15 @@ int main(int argc, const char * argv[]) {
     int image_width = 400;
     
     // Calculate the image height, and ensure that it's at least 1.
-    // 이후 scene ray를 통과시키기 위한 가상 뷰포트를 설정할건데, 만약 픽셀들의 수직 간격과 수평 간격이 같다면 그걸 둘러싼 뷰포트는 여기서의 rendered image와 동일한 aspect ratio를 가질 것.
+    // 이후 scene ray를 통과시키기 위한 가상 뷰포트를 설정할 건데, 만약 픽셀들의 수직 간격과 수평 간격이 같다면 그걸 둘러싼 뷰포트는 여기서의 rendered image와 동일한 aspect ratio를 가질 것.
     int image_height = static_cast<int>(image_width / aspect_ratio);
     image_height = (image_height < 1) ? 1 : image_height;
+    
+    // World
+    // 초록색 ground는 아주 큰 sphere의 북쪽 normal에 대한 RGB color를 이용해 구현.
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
+    world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
     
     // Camera
     // camera_center에서 viewport_center로의 벡터는 뷰포트에 orthogonal하고, 그 거리(focal_length)는 one unit으로 설정.
@@ -89,7 +88,7 @@ int main(int argc, const char * argv[]) {
             auto ray_direction = pixel_center - camera_center;
             ray r(camera_center, ray_direction);
 
-            color pixel_color = ray_color(r);
+            color pixel_color = ray_color(r, world);
             write_color(std::cout, pixel_color);
         }
     }

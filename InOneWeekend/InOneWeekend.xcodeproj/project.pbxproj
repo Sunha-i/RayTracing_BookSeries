@@ -28,6 +28,11 @@
 		A49594FF2B2DF797001A09E8 /* vec3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vec3.h; sourceTree = "<group>"; };
 		A49595002B2DFF36001A09E8 /* color.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = color.h; sourceTree = "<group>"; };
 		A49595032B2E1F99001A09E8 /* ray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ray.h; sourceTree = "<group>"; };
+		A49595042B2FD10E001A09E8 /* hittable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hittable.h; sourceTree = "<group>"; };
+		A49595052B2FD227001A09E8 /* sphere.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sphere.h; sourceTree = "<group>"; };
+		A49595062B2FEE21001A09E8 /* hittable_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hittable_list.h; sourceTree = "<group>"; };
+		A49595072B2FF4ED001A09E8 /* rtweekend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rtweekend.h; sourceTree = "<group>"; };
+		A49595082B30BD10001A09E8 /* interval.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = interval.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +69,11 @@
 				A49594FF2B2DF797001A09E8 /* vec3.h */,
 				A49595002B2DFF36001A09E8 /* color.h */,
 				A49595032B2E1F99001A09E8 /* ray.h */,
+				A49595042B2FD10E001A09E8 /* hittable.h */,
+				A49595052B2FD227001A09E8 /* sphere.h */,
+				A49595062B2FEE21001A09E8 /* hittable_list.h */,
+				A49595072B2FF4ED001A09E8 /* rtweekend.h */,
+				A49595082B30BD10001A09E8 /* interval.h */,
 			);
 			path = InOneWeekend;
 			sourceTree = "<group>";
