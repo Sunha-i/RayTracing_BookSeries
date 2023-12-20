@@ -53,6 +53,14 @@ public:
     double length_squared() const {
         return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
     }
+    
+    static vec3 random() {
+        return vec3(random_double(), random_double(), random_double());
+    }
+    
+    static vec3 random(double min, double max) {
+        return vec3(random_double(min,max), random_double(min,max), random_double(min,max));
+    }
 };
 
 // point3 is just an alias for vec3, but useful for geometric clarity in the code.
@@ -103,6 +111,31 @@ inline vec3 cross(const vec3 &u, const vec3 &v) {
 
 inline vec3 unit_vector(vec3 v) {
     return v / v.length();
+}
+
+inline vec3 random_in_unit_sphere() {
+    // use a rejection method to generate the random vector inside of the unit sphere.
+    // unit cube 안에서 랜덤한 지점을 pick하지만 unit sphere를 벗어난 범위의 point는 무시.
+    while (true) {
+        auto p = vec3::random(-1,1);
+        if (p.length_squared() < 1)
+            return p;
+    }
+}
+
+inline vec3 random_unit_vector() {
+    return unit_vector(random_in_unit_sphere());
+}
+
+inline vec3 random_on_hemisphere(const vec3& normal) {
+    // diffuse material(or matte) 표면에 부딪힌 광선은 표면에서 멀어지는 어떤 방향으로든 균일한 확률로 튕겨나가기 때문에..
+    // 이 매트한 표면을 구현하는 가장 직관적인 방법은 표면에서 광선을 모든 방향으로 동일하게 무작위로 반사시키는 것.
+    // 이에 따라 unit sphere 내에서의 normalized random vector를 생성하고, 해당 벡터가 surface normal쪽 반구에 들어가지 않는다면 invert하는 방식!
+    vec3 on_unit_sphere = random_unit_vector();
+    if (dot(on_unit_sphere, normal) > 0.0)      // In the same hemisphere as the normal
+        return on_unit_sphere;
+    else
+        return -on_unit_sphere;
 }
 
 #endif /* VEC3_H */

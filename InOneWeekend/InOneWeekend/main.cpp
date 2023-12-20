@@ -13,7 +13,7 @@
 
 int main(int argc, const char * argv[]) {
     
-    // World ;초록색 ground는 아주 큰 sphere의 북쪽 normal에 대한 RGB color를 이용해 구현.
+    // World ;hittable object로는 작은 sphere와 ground로 사용할 아주 큰 sphere 두 개가 있음.
 
     hittable_list world;
     
@@ -25,6 +25,7 @@ int main(int argc, const char * argv[]) {
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
     
     cam.render(world);
     

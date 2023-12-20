@@ -20,6 +20,7 @@ public:
     double aspect_ratio      = 1.0;  // Ratio of image width over height
     int    image_width       = 100;  // Rendered image width in pixel count
     int    samples_per_pixel = 10;   // Count of random samples for each pixel
+    int    max_depth         = 10;   // Maximum number of ray bounces into scene
     
     void render(const hittable& world) {
         initialize();
@@ -35,7 +36,7 @@ public:
                 color pixel_color(0,0,0);
                 for (int sample = 0; sample < samples_per_pixel; ++sample) {
                     ray r = get_ray(i,j);
-                    pixel_color += ray_color(r, world);
+                    pixel_color += ray_color(r, max_depth, world);
                 }
                 write_color(std::cout, pixel_color, samples_per_pixel);
             }
@@ -107,19 +108,44 @@ private:
         return (px * pixel_delta_u) + (py * pixel_delta_v);
     }
 
-    color ray_color(const ray& r, const hittable& world) const {
+    color ray_color(const ray& r, int depth, const hittable& world) const {
         // linearly blend white and blue depending on the height of the y coordinate.
         // to implement a simple gradient, use lerp.
         // blendedValue = (1-a) * startValue + a * endValue
         
-        // 아직 빛과 같은 요소들이 없기 때문에 color map을 이용해서 normal(N)을 시각화할 것.
+        // color map을 이용해서 normal(N)을 시각화하는 경우:
         // N을 unit length vector로 생각하면, 각 component는 -1과 1사이. -> 0~1의 간격으로 mapping해야 (r,g,b)로 나타낼 수 있음.
-        // 이를 위해 +1만큼의 offset에 범위의 간격인 2를 1로 줄이는 0.5 * color(N.x()+1, N.y()+1, N.z()+1)을 구현한 것.
+        // 이를 위해 +1만큼의 offset에 범위의 간격인 2를 1로 줄이는 0.5 * color(N.x()+1, N.y()+1, N.z()+1)을 구현.
         
         hit_record rec;
         
-        if (world.hit(r, interval(0, infinity), rec)) {
-            return 0.5 * (rec.normal + color(1,1,1));
+        // If we've exceeded the ray bounce limit, no more light is gathered. (returning no light contribution)
+        if (depth <= 0)
+            return color(0,0,0);
+        
+        // 반사에서 색의 50%를 반환. 이걸 recursive하게 구현. (keeps 100% of its color->white material, 0%->black)
+        // 각 반사에서 에너지의 절반만 흡수하는 50%의 반사체를 정의한 것이므로, 이 diffuse 재질에 대해 반사율을 낮출수록 어두워짐.
+        // +) maximum recursion depth를 설정! (이 조건이 없다면 레이가 아무 것도 hit하지 못할 때 멈출 것)
+        // ++) 부동 소수점 반올림 오차에 의해 교차 지점이 표면과 완벽하게 일치하지 않는다면, 이는 랜덤하게 반사되는 다음 레이의 원점이기에
+        //     표면 바로 아래에 위치할 경우 해당 표면과 다시 교차할 수도 있음. 따라서 origin으로부터의 거리를 나타내는 t값을 이용해,
+        //     계산된 교차 지점과 매우 가까운 hit를 무시하도록 함.; 0->0.001로 수정 (acne problem 해결)
+        
+        // True Lambertian Reflection:
+        // Lambert's Cosine Law는 이상적인 난반사 표면(lambertian surface)에서 관찰되는 빛의 강도가 surface normal과
+        // view vector 사이의 각, Φ의 cos에 비례한다는 것을 말함. 이 표면은 lambertian reflectance를 가지는데, 이는 관찰자가 바라보는 각도와 관계없이
+        // 같은 겉보기 밝기를 가진다는 것을 의미함. 위 코사인 법칙에 따른다면 표면과 관찰 시점의 각도에 따라서 복사 강도[radiant intensity]*가 달라질 텐데,
+        // 왜 이 법칙을 만족하는 lambertian 표면은 각도와 관계없이 같은 radiance를 가지는지**에 대해...다음의 의존성으로 설명이 가능할 것.
+        // view vector와 normal vector 사이의 각도가 커지면 view로 향하는 radiance는 작아짐. 그런데 표면으로부터 관찰자의 눈으로 향하는
+        // [투영면적 or 입체각] 또한 같은 의존성(cosΦ)으로 감소하고, 그렇게 작아짐에 따라 photon은 관찰자에게 더욱 중첩되어 도달하기 때문에 radiance가 커짐.
+        // -> 상반된 [두 관계]가 같은 의존성을 가지는 것! -> 사실상 **를 구현하기 위해 필요한 *를 유도한 느낌의 분포.
+        
+        // ++) 이에 따라 random_on_hemisphere(rec.normal)을 이용해 diffuse model을 만드는 대신..
+        //     Lambertian distribution을 이용해 난반사(diffuse)를 나타내는 Lambertian reflectance을 구현. (더 정확한 표현)
+        //     그 결과 법선 방향으로의 더 많은 ray 때문에(..) 이전 방법보다 그림자가 더 돋보이고, 하늘의 색에 의해 구체가 푸른 색조를 띰.
+
+        if (world.hit(r, interval(0.001, infinity), rec)) {
+            vec3 direction = rec.normal + random_unit_vector();
+            return 0.1 * ray_color(ray(rec.p, direction), depth-1, world);
         }
         
         vec3 unit_direction = unit_vector(r.direction());
