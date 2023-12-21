@@ -12,6 +12,7 @@
 
 #include "color.h"
 #include "hittable.h"
+#include "material.h"
 
 #include <iostream>
 
@@ -117,8 +118,6 @@ private:
         // N을 unit length vector로 생각하면, 각 component는 -1과 1사이. -> 0~1의 간격으로 mapping해야 (r,g,b)로 나타낼 수 있음.
         // 이를 위해 +1만큼의 offset에 범위의 간격인 2를 1로 줄이는 0.5 * color(N.x()+1, N.y()+1, N.z()+1)을 구현.
         
-        hit_record rec;
-        
         // If we've exceeded the ray bounce limit, no more light is gathered. (returning no light contribution)
         if (depth <= 0)
             return color(0,0,0);
@@ -130,22 +129,15 @@ private:
         //     표면 바로 아래에 위치할 경우 해당 표면과 다시 교차할 수도 있음. 따라서 origin으로부터의 거리를 나타내는 t값을 이용해,
         //     계산된 교차 지점과 매우 가까운 hit를 무시하도록 함.; 0->0.001로 수정 (acne problem 해결)
         
-        // True Lambertian Reflection:
-        // Lambert's Cosine Law는 이상적인 난반사 표면(lambertian surface)에서 관찰되는 빛의 강도가 surface normal과
-        // view vector 사이의 각, Φ의 cos에 비례한다는 것을 말함. 이 표면은 lambertian reflectance를 가지는데, 이는 관찰자가 바라보는 각도와 관계없이
-        // 같은 겉보기 밝기를 가진다는 것을 의미함. 위 코사인 법칙에 따른다면 표면과 관찰 시점의 각도에 따라서 복사 강도[radiant intensity]*가 달라질 텐데,
-        // 왜 이 법칙을 만족하는 lambertian 표면은 각도와 관계없이 같은 radiance를 가지는지**에 대해...다음의 의존성으로 설명이 가능할 것.
-        // view vector와 normal vector 사이의 각도가 커지면 view로 향하는 radiance는 작아짐. 그런데 표면으로부터 관찰자의 눈으로 향하는
-        // [투영면적 or 입체각] 또한 같은 의존성(cosΦ)으로 감소하고, 그렇게 작아짐에 따라 photon은 관찰자에게 더욱 중첩되어 도달하기 때문에 radiance가 커짐.
-        // -> 상반된 [두 관계]가 같은 의존성을 가지는 것! -> 사실상 **를 구현하기 위해 필요한 *를 유도한 느낌의 분포.
+        // hit_record의 material pointer의 멤버 함수 호출을 통해 어떤 레이가 산란되었는지 그 여부를 알 수 있음.
+        hit_record rec;
         
-        // ++) 이에 따라 random_on_hemisphere(rec.normal)을 이용해 diffuse model을 만드는 대신..
-        //     Lambertian distribution을 이용해 난반사(diffuse)를 나타내는 Lambertian reflectance을 구현. (더 정확한 표현)
-        //     그 결과 법선 방향으로의 더 많은 ray 때문에(..) 이전 방법보다 그림자가 더 돋보이고, 하늘의 색에 의해 구체가 푸른 색조를 띰.
-
         if (world.hit(r, interval(0.001, infinity), rec)) {
-            vec3 direction = rec.normal + random_unit_vector();
-            return 0.1 * ray_color(ray(rec.p, direction), depth-1, world);
+            ray scattered;
+            color attenuation;
+            if (rec.mat->scatter(r, rec, attenuation, scattered))
+                return attenuation * ray_color(scattered, depth-1, world);
+            return color(0,0,0);
         }
         
         vec3 unit_direction = unit_vector(r.direction());

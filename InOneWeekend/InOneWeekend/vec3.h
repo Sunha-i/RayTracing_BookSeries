@@ -12,6 +12,7 @@
 #include <iostream>
 
 using std::sqrt;
+using std::fabs;
 
 class vec3 {
 public:
@@ -52,6 +53,12 @@ public:
 
     double length_squared() const {
         return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
+    }
+    
+    bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions.
+        auto s = 1e-8;
+        return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
     }
     
     static vec3 random() {
@@ -136,6 +143,14 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
         return on_unit_sphere;
     else
         return -on_unit_sphere;
+}
+
+vec3 reflect(const vec3& v, const vec3& n) {
+    // incident ray v에 대해, reflected ray는 v+2b.
+    // b의 길이는 v를 unit normal에 대해 정사영시킨 길이이고, 방향은 n과 같음.
+    // 이때 ray와 normal은 반대 방향을 향할 것이므로 내적의 결과에 음수를 곱해 그 길이를 구함.
+    
+    return v - 2*dot(v,n)*n;
 }
 
 #endif /* VEC3_H */

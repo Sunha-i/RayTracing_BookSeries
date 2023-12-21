@@ -10,9 +10,13 @@
 
 #include "rtweekend.h"
 
+// To resolve the circular reference issue.
+class material;
+
 struct hit_record {
     point3 p;
     vec3 normal;
+    shared_ptr<material> mat;   // when hit surface, point material pointer.
     double t;
     bool front_face;
     

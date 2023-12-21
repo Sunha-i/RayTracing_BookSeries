@@ -34,6 +34,7 @@
 		A49595072B2FF4ED001A09E8 /* rtweekend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rtweekend.h; sourceTree = "<group>"; };
 		A49595082B30BD10001A09E8 /* interval.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = interval.h; sourceTree = "<group>"; };
 		A49595092B316EB9001A09E8 /* camera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = camera.h; sourceTree = "<group>"; };
+		A495950A2B36584F001A09E8 /* material.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = material.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +77,7 @@
 				A49595072B2FF4ED001A09E8 /* rtweekend.h */,
 				A49595082B30BD10001A09E8 /* interval.h */,
 				A49595092B316EB9001A09E8 /* camera.h */,
+				A495950A2B36584F001A09E8 /* material.h */,
 			);
 			path = InOneWeekend;
 			sourceTree = "<group>";
