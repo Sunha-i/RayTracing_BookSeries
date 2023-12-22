@@ -145,12 +145,24 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
         return -on_unit_sphere;
 }
 
-vec3 reflect(const vec3& v, const vec3& n) {
+inline vec3 reflect(const vec3& v, const vec3& n) {
     // incident ray v에 대해, reflected ray는 v+2b.
     // b의 길이는 v를 unit normal에 대해 정사영시킨 길이이고, 방향은 n과 같음.
     // 이때 ray와 normal은 반대 방향을 향할 것이므로 내적의 결과에 음수를 곱해 그 길이를 구함.
     
     return v - 2*dot(v,n)*n;
+}
+
+inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
+    // Snell's Law: η×sinθ = ηʹ×sinθʹ (η is refractive indices)
+    // 결과적으로 구해야 하는 refracted ray Rʹ은 Rʹ⟂ + R'∥ 로 나눌 수 있고, (어떠한 증명을 통해) 각각을 얻을 수 있음.
+    // Rʹ⟂ = η/ηʹ(R+cosθn), R'∥ = -√(1-❘R'⟂❘^2)n. 여기서 cosθ만 내적을 이용해 구해주면 됨!
+    // R과 n을 unit vector로 제한한다면 cosθ = -R·n. η/ηʹ는 파라미터로 받는 refraction ratio.
+    
+    auto cos_theta = fmin(dot(-uv,n), 1.0);
+    vec3 r_out_perp =  etai_over_etat * (uv + cos_theta * n);
+    vec3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
 }
 
 #endif /* VEC3_H */

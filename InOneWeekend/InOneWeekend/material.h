@@ -80,6 +80,49 @@ private:
     double fuzz;
 };
 
+class dielectric : public material {
+public:
+    dielectric(double index_of_refraction) : ir(index_of_refraction) {}
+    
+    // 물, 유리, 다이아몬드와 같이 투명한 물질들. ray가 hit하면, reflected ray와 refracted(transmitted) ray로 나뉨!
+    // interaction당 오직 하나의 scattered ray를 생성하면서 굴절과 반사 중 랜덤하게 선택.
+    // ** 레이가 더 높은 refractive index를 갖는 물질 내에 있을 때, 스넬의 법칙에 대한 해가 존재하지 않는다면 굴절이 불가능.
+    // 만약 glass(η = 1.5)->air(ηʹ = 1.0)의 경우라면 스넬의 법칙을 이용한 sinθʹ는 1.5/1.0×sinθ.
+    // 이때 θ의 값에 따라 η/ηʹ×sinθ > 1.0가 될 수 있고, sin은 1보다 클 수 없기 때문에 조건을 만족하는 해가 존재하지 않을 것.
+    // 따라서 굴절 현상은 발생할 수 없고, 레이는 반드시 반사됨.
+    // 여기서 삼각비는 단순하게 삼각법을 이용해 해결. sinθ = √(1-(cosθ)^2), cosθ = -R·n.
+    
+    bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const override {
+        attenuation = color(1.0, 1.0, 1.0);
+        double refraction_ratio = rec.front_face ? (1.0/ir) : ir;
+        
+        vec3 unit_direction = unit_vector(r_in.direction());
+        double cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0);
+        double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
+        
+        bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+        
+        vec3 direction;
+        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
+            direction = reflect(unit_direction, rec.normal);
+        else
+            direction = refract(unit_direction, rec.normal, refraction_ratio);
+        
+        scattered = ray(rec.p, direction);
+        return true;
+    }
+    
+private:
+    double ir;  // Index of Refraction
+    
+    static double reflectance(double cosine, double ref_idx) {
+        // Use Schlick's approximation for reflectance. -> get reflectivity that varies with angle. -> real glass!
+        auto r0 = (1-ref_idx) / (1+ref_idx);
+        r0 = r0 * r0;
+        return r0 + (1-r0) * pow((1-cosine),5);
+    }
+};
+
 #endif /* MATERIAL_H */
 
 // Note
