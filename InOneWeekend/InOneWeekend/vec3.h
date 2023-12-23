@@ -120,6 +120,16 @@ inline vec3 unit_vector(vec3 v) {
     return v / v.length();
 }
 
+inline vec3 random_in_unit_disk() {
+    // using the same kind of method in random_in_unit_sphere()
+    // just for "two dimensions".
+    while (true) {
+        auto p = vec3(random_double(-1,1), random_double(-1,1), 0);
+        if (p.length_squared() < 1)
+            return p;
+    }
+}
+
 inline vec3 random_in_unit_sphere() {
     // use a rejection method to generate the random vector inside of the unit sphere.
     // unit cube 안에서 랜덤한 지점을 pick하지만 unit sphere를 벗어난 범위의 point는 무시.
