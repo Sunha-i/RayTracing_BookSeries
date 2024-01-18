@@ -8,4 +8,4 @@ set ( CMAKE_CXX_STANDARD_REQUIRED ON )
 set ( CMAKE_CXX_EXTENSIONS        OFF )
 
 # Executables
-add_executable(result InOneWeekend/InOneWeekend/main.cpp)
+add_executable(result TheNextWeek/TheNextWeek/main.cpp)
