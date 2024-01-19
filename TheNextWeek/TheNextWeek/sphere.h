@@ -14,7 +14,15 @@
 
 class sphere : public hittable {
 public:
-    sphere(point3 _center, double _radius, shared_ptr<material> _material) : center(_center), radius(_radius), mat(_material) {}
+    // Stationary Sphere
+    sphere(point3 _center, double _radius, shared_ptr<material> _material) : center1(_center), radius(_radius), mat(_material), is_moving(false) {}
+    // Moving Sphere
+    // ; its center moves linerly from center1 at t=1 to center2 at t=2.
+    sphere(point3 _center1, point3 _center2, double _radius, shared_ptr<material> _material)
+        : center1(_center1), radius(_radius), mat(_material), is_moving(true)
+    {
+        center_vec = _center2 - _center1;
+    }
     
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         // oc는 origin to center를 의미함.
@@ -26,6 +34,7 @@ public:
         // 그런데 ↑ 이 이차방정식의 일차항 계수인 2b·(A-C)는 짝수이기 때문에 짝수 근의 공식과 판별식을 사용해 더 간단한 식으로 대체 가능함.
         // ++) 벡터의 자기 자신에 대한 내적은 벡터의 길이의 제곱이므로 vec3에서 구현한 메소드 length_squared()를 이용.
         
+        point3 center = is_moving ? sphere_center(r.time()) : center1;
         vec3 oc = r.origin() - center;
         auto a = r.direction().length_squared();
         auto half_b = dot(oc, r.direction());
@@ -59,9 +68,16 @@ public:
     }
     
 private:
-    point3 center;
+    point3 center1;
     double radius;
     shared_ptr<material> mat;
+    bool is_moving;
+    vec3 center_vec;
+    
+    point3 sphere_center(double time) const {
+        // Linearly interpolate from center1 to center2 according to time, where t=0 yields center1, and t=1 yields center2.
+        return center1 + time * center_vec;
+    }
 };
 
 #endif /* SPHERE_H */
