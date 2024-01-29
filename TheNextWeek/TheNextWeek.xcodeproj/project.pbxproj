@@ -23,6 +23,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A40FF9962B5C46AB00B98375 /* bvh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bvh.h; sourceTree = "<group>"; };
+		A42845E42B5C3DCA00C2CB7C /* aabb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = aabb.h; sourceTree = "<group>"; };
 		A495953C2B388770001A09E8 /* TheNextWeek */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TheNextWeek; sourceTree = BUILT_PRODUCTS_DIR; };
 		A495953F2B388770001A09E8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		A49595462B39A448001A09E8 /* vec3.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vec3.h; sourceTree = "<group>"; };
@@ -78,6 +80,8 @@
 				A495954D2B39A4D9001A09E8 /* interval.h */,
 				A495954E2B39A4F0001A09E8 /* camera.h */,
 				A495954F2B39A4FD001A09E8 /* material.h */,
+				A42845E42B5C3DCA00C2CB7C /* aabb.h */,
+				A40FF9962B5C46AB00B98375 /* bvh.h */,
 			);
 			path = TheNextWeek;
 			sourceTree = "<group>";
